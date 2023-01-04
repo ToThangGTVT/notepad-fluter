@@ -9,7 +9,7 @@ import 'package:highlight/languages/dart.dart';
 import 'package:path_provider/path_provider.dart' as path;
 import 'package:path_provider_linux/path_provider_linux.dart' as pathProviderLinux;
 import 'package:path_provider_windows/path_provider_windows.dart' as pathProvderWindows;
-
+import 'package:get/get.dart';
 
 void main() {
   runApp(const MyApp());
@@ -21,10 +21,10 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return GetMaterialApp(
       theme: ThemeData(
         useMaterial3: true,
-        primarySwatch: Colors.blue,
+        primarySwatch: Colors.green,
       ),
       home: const MyHomePage(title: 'Flutter Demo Home Page'),
     );
@@ -44,6 +44,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   late CodeController _codeController;
   late TabController _tabController;
   List<String> files = [];
+  late TextEditingController _textController;
 
   @override
   void initState() {
@@ -52,6 +53,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
       text: "",
       language: dart,
     );
+    _textController = TextEditingController(text: "");
     _tabController = TabController(length: files.length, vsync: this);
     _listOfFiles();
   }
@@ -116,13 +118,42 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
             alignment: Alignment.centerLeft,
             child: Container(
               color: Colors.green,
-              width: double.infinity,
               child: Row(
                 children: [
                   const SizedBox(width: 8,),
-                  ElevatedButton(onPressed: () {}, child: const Icon(Icons.add)),
+                  ElevatedButton(onPressed: () {
+                    Get.dialog(
+                      AlertDialog(
+                        title: const Text('Tạo file mới'),
+                        content: TextField(
+                          controller: _textController,
+                          decoration: const InputDecoration(
+                            border: OutlineInputBorder(),
+                            labelText: 'Tên file',
+                          ),
+                        ),
+                        actions: [
+                          TextButton(
+                            child: const Text("Close"),
+                            onPressed: () => Get.back(),
+                          ),
+                          TextButton(
+                            child: const Text("Save"),
+                            onPressed: () async {
+                              String? appDocPath = await _getDirectory();
+                              File file = File('$appDocPath/${_textController.value.text}.txt');
+                              await file.create();
+                              _listOfFiles();
+                              Get.back();
+                            },
+                          ),
+                        ],
+                      ),
+                    );
+                  }, child: const Icon(Icons.add)),
                   const SizedBox(width: 8,),
-                  TabBar(
+                  Expanded(
+                    child: TabBar(
                     isScrollable: true,
                     controller: _tabController,
                     indicatorColor: Colors.green[800],
@@ -135,6 +166,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                       });
                     },
                   ),
+                  )
                 ],
               )
             )
